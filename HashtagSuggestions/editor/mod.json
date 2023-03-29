@@ -1,0 +1,39 @@
+{
+	"geode": "1.0.0-beta.10",
+	"version": "v1.0.0",
+	"id": "henryspheria.HashtagSuggestions-editor",
+	"name": "#suggestions | Editor tools",
+	"developer": "HenrySpheria",
+	"description": "loli",
+	"settings": {
+		"playtest-touchindicate": {
+			"name": "Playtest: Touch indicator",
+			"description": "Indicate where the player clicked with a circle",
+			"type": "bool",
+			"default": true
+		},
+		"playtest-releaseindicate": {
+			"name": "Playtest: Release indicator",
+			"description": "Indicate where the player released with a circle",
+			"type": "bool",
+			"default": false
+		},
+		"playtest-circlesize": {
+			"name": "Playtest: Indicator size",
+			"description": "Size for the indicator\nNOTE: The actual size is incorrect due to C++",
+			"type": "int",
+			"min": 1,
+			"max": 50,
+			"default": 5,
+			"control": {
+                      "slider": true
+                  }
+		},
+		"editor-temporarylevel": {
+			"name": "Editor: Temporary level",
+			"description": "Adds a button to create an empty temporary level",
+			"type": "bool",
+			"default": true
+		}
+	}
+}
