@@ -14,7 +14,7 @@ class $modify(PlayLayer) {
 		idkhowtousesprbatchnode->setID("iamdumb");
 		level->addChild(idkhowtousesprbatchnode);
 		return true;
-	}
+	};
 	void markCheckpoint() {
 		if (m_fields->m_isDualMode) {
 			auto level = getChildOfType<CCLayer>(this, 0);
