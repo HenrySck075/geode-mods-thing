@@ -4,14 +4,25 @@
 #include <Geode/modify/PlayerObject.hpp>
 #include <Geode/modify/LevelBrowserLayer.hpp>
 #include <Geode/modify/EditorPauseLayer.hpp>
-#include <nlohmann/json.hpp>
 #include <Geode/loader/Log.hpp>
-using jshon = nlohmann::json;
-auto theblocks = jshon::parse(R"(
-{
-	"1": [[1011,0,0,180,1010,0],[1011,0,0,180,1010,0],[507,0,20,0,-1,0],[507, -20, 0, -90,-1,0],[507, 20, 0, 90,-1,0],[507, 0, -20, 180,-1,0]]
+#include <typeinfo>
+//currently only supports int
+CCArray*createFromStdArray(std::array h) {
+    auto d = CCArray::create();
+    for (auto&item : h) {
+        std::string typ=typeid(item).name();
+        if (typ=="int") {
+            auto i = CCInteger::create(item);
+        } else if (typ=="array") {
+            auto i = createFromStdArray(item);
+        }
+        d->addObject(i);
+    };
+    return d;
 }
-)");
+auto theblocks = CCDictionary::create();
+theblocks->setObject(CCString::create("1"), createFromStdArray([[1011,0,0,180,1010,0],[1011,0,0,180,1010,0],[507,0,20,0,-1,0],[507, -20, 0, -90,-1,0],[507, 20, 0, 90,-1,0],[507, 0, -20, 180,-1,0]]));
+
 using namespace geode::prelude;
 bool inPlaytest = false;
 
