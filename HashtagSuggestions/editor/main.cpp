@@ -105,15 +105,15 @@ public:
 			//fuck you
 			auto block = static_cast<GameObject*>(the);
 			//if (theblocks.contains(std::to_string(block->m_objectID))) { continue; };
-			auto&rebl = theblocks[std::to_string(block->m_objectID)];
-			for (int i = 0; i <= sizeof(rebl); i++) {
-				auto d = rebl[i];
-				std::string group_id = "1," + d.at(0);
-				std::string x = ",2," + std::to_string(block->getPositionX() + d.at(1));
-				std::string y = ",3," + std::to_string(block->getPositionY() + d.at(2));
-				std::string rot = ",6," + std::to_string(block->getRotation() + d.at(3));
-				std::string basecol = ",21," + std::to_string(c(d.at(4), block, 0));
-				std::string detailcol = ",22," + std::to_string(c(d.at(5), block, 1));
+			auto&rebl = static_cast<CCArray*>(theblocks->objectForKey(std::to_string(block->m_objectID)));
+			for (int i = 0; i <= rebl->count(); i++) {
+				auto d = rebl->objectAtIndex(i);
+				std::string group_id = "1," + d->objectAtIndex(0);
+				std::string x = ",2," + std::to_string(block->getPositionX() + d->objectAtIndex(1));
+				std::string y = ",3," + std::to_string(block->getPositionY() + d->objectAtIndex(2));
+				std::string rot = ",6," + std::to_string(block->getRotation() + d->objectAtIndex(3));
+				std::string basecol = ",21," + std::to_string(c(d->objectAtIndex(4), block, 0));
+				std::string detailcol = ",22," + std::to_string(c(d->objectAtIndex(5), block, 1));
 				std::string groups = ",51," + e(block->getGroupIDs());
 				//funny n
 				std::string objstr = group_id + x + y + rot + basecol + detailcol + groups + ";";
