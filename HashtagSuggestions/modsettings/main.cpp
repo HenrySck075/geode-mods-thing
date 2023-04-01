@@ -1,5 +1,6 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/CCKeyboardDispatcher>
+#include <Geode/ui/internal/settings/ModSettingsPopup.hpp>
 #include <vector>
 
 using namespace geode::prelude;
@@ -11,17 +12,8 @@ bool any(std::function func, std::vector<CCNode> iter) {
     }
     return h;
 };
-static SettingNode* createSetting(SettingValue* value) {
-    auto ret = new SettingNode();
-    if (ret && ret::init(value)) {
-        ret->autorelease();
-        return ret;
-    };
-    CC_SAFE_DELETE(ret);
-    return nullptr;
-};
 void openModSettings(Mod* mod) {
-    CCDirector::sharedDirector()->getRunningScene()->addChild(createSetting(mod->))
+    CCDirector::sharedDirector()->getRunningScene()->addChild(ModSettingsPopup::create(mod))
 };
 class $modify(CCKeyboardDispatcher) {
     bool hs_combinationWaiting = false;
