@@ -77,18 +77,21 @@ public:
         the["twoPlayer"] = int(searchObj->m_twoPlayerFilter);
         the["coins"] = int(searchObj->m_coinsFilter);
         the["epic"] = int(searchObj->m_epicFilter);
-        noStar - Unrated filter. Not sent when off, 1 for on.
+        if (searchObj->m_noStarFilter) the["noStar"] = 1;
+        if (searchObj->m_starFilter) the["star"] = 1;
+        if (searchObj->m_customSongFilter) {
+            the["song"]=searchObj->m_songID;
+            the["customSong"] = searchObj=>m_customSongFilter;
+        };
+        the["page"] = searchObj->m_page;
+        the["str"] = searchObj->m_searchQuery;
+        the["gameVersion"] = 21;
+        the["binaryVersion"] = 35;
+        the["gdw"] = 0;
 
-        star - Rated filter. Not sent when off, 1 for on.
-
-        song - Official song filter. Not sent when off.
-
-        customSong - Enable newgrounds song filter, song parameter will be songID. Not sent when off.
-
-
-
-
-        
-
+        //i hope this one exist
+        auto httpreq = CCHttpRequest::create();
+        httpreq->setRequestType(HttpRequestType::kHttpPost);
+        httpreq->setUrl(Mod::get()->getSettingValue<std::string>("gdps") + "/getGJLevels21.php")
     }
 }
