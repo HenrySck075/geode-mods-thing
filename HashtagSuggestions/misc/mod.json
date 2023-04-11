@@ -11,6 +11,11 @@
 			"description": "Change transition speed :)",
 			"type": "float",
             "default": 0.5
+        },
+        "gdps": {
+            "name": "Set GDPS URL",
+            "type": "string",
+            "default": "http://boomlings.com/database"
         }
 	}
 }
