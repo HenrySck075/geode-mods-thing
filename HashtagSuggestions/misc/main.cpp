@@ -69,7 +69,24 @@ public:
         json the;
         the["secret"] = "Wmfd2893gb7";
         the["type"] = 0;
-        
+        the["page"] = 1;
+        the["uncompleted"] = int(searchObj->m_uncompletedFilter);
+        the["onlyCompleted"] = int(searchObj->m_completedFilter);
+        the["featured"] = int(searchObj->m_featuredFilter);
+        the["original"] = int(searchObj->m_originalFilter);
+        the["twoPlayer"] = int(searchObj->m_twoPlayerFilter);
+        the["coins"] = int(searchObj->m_coinsFilter);
+        the["epic"] = int(searchObj->m_epicFilter);
+        noStar - Unrated filter. Not sent when off, 1 for on.
+
+        star - Rated filter. Not sent when off, 1 for on.
+
+        song - Official song filter. Not sent when off.
+
+        customSong - Enable newgrounds song filter, song parameter will be songID. Not sent when off.
+
+
+
 
         
 
