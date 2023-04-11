@@ -1,7 +1,8 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/CCTransitionFade.hpp> //only this is available fsr
-#include <Geode/utils/cocos.hpp>
+#include <Geode/cocos2d/extension/network/HttpRequest.h>
 #include <Geode/modify/LevelSearchLayer.hpp>
+#include <Geode/cocos/robtop/xml/DS_Dictionary.h>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -92,6 +93,18 @@ public:
         //i hope this one exist
         auto httpreq = CCHttpRequest::create();
         httpreq->setRequestType(HttpRequestType::kHttpPost);
-        httpreq->setUrl(Mod::get()->getSettingValue<std::string>("gdps") + "/getGJLevels21.php")
+        httpreq->setUrl(Mod::get()->getSettingValue<std::string>("gdps") + "/getGJLevels21.php");
+        const char* stringified = the.dump();
+        httpreq->setRequestData(stringified, stringified.length());
+        httpreq->setCallbackResponse(httpresponse_selector(PerformRandomLevel::response));
+        CCHttpClient::send(httpreq);
+    }
+    void response(CCHttpClient* client, CCHttpResponse* response) {
+        auto responseData = response->getResponseData();
+        const char* responseArr = &responseArr[0];
+        gd::string iforgor(responseArr);
+        //levels, authors, songs
+        std::vector<gd::string> splitted;
+        DS_Dictionary::split(iforgor, '#', splitted);
     }
 }
