@@ -189,7 +189,7 @@ public:
         auto action = CCEaseBounceOut::create(CCMoveTo::create(0.5f, CCPoint{0,90}));
         this->runAction(action);
     }
-    virtual bool ccTouchBegan(CCTouch* t, CCEvent* thisdoesntexist) {
+    virtual bool ccTouchMoved(CCTouch* t, CCEvent* thisdoesntexist) {
         /*
         if (pinned) {
             auto canvas = CCDirector::sharedDirector()->getWinSize();
@@ -202,7 +202,7 @@ public:
         };
         */
         geode::log::info("hi");
-        return CCLayer::ccTouchBegan(t,thisdoesntexist);
+        return CCLayer::ccTouchMoved(t,thisdoesntexist);
     }
 };
 
