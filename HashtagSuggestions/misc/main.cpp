@@ -4,6 +4,7 @@
 #include <Geode/cocos/extensions/network/HttpResponse.h>
 #include <Geode/cocos/extensions/network/HttpClient.h>
 #include <Geode/modify/LevelSearchLayer.hpp>
+#include <Geode/modify/MoreOptionsLayer.hpp>
 #include <random>
 #include <iterator>
 #include <typeinfo>
@@ -32,44 +33,19 @@ Iter select_randomly(Iter start, Iter end) {
     return select_randomly2(start, end, gen);
 }
 
-template <typename Out>
-void split(const std::string& s, char delim, Out result) {
-    std::istringstream iss(s);
-    std::string item;
-    while (std::getline(iss, item, delim)) {
-        *result++ = item;
-    }
-}
-
 template <typename vectelemtype>
-std::vector<vectelemtype> split(const vectelemtype& s, char delim) {
-    std::vector<vectelemtype> elems;
-    split(s, delim, std::back_inserter(elems));
+std::vector<std::string> split(vectelemtype& s, char delim) {
+    std::vector<std::string> elems;
+    std::stringstream ss(s);
+    std::string word;
+    while (!ss.eof()) {
+        std::getline(ss, word, delim);
+        elems.push_back(word);
+    }
     return elems;
 }
 
 class PerformRandomLevel : public CCLayer {
-protected:
-    bool init() {
-        auto winSize = CCDirector::sharedDirector()->getWinSize();
-
-        auto bg = CCSprite::create("GJ_gradientBG.png");
-        auto bgSize = bg->getContentSize();
-
-        bg->setScaleX(winSize.width / bgSize.width);
-        bg->setScaleY(winSize.height / bgSize.height);
-        bg->setAnchorPoint(CCPoint{ 0,0 });
-        bg->setZOrder(-1);
-
-        auto thetext = CCLabelBMFont::create("Getting random level", "bigFont.fnt");
-        thetext->setContentSize(thetext->getContentSize() * 1.5f);
-        thetext->setPosition(winSize / 2 + CCPoint{ 0,30 });
-
-
-        this->addChild(bg); this->addChild(thetext);
-        LoadingCircle::create()->show();
-        return true;
-    }
 public:
     static PerformRandomLevel* create() {
         auto pret = new PerformRandomLevel();
@@ -80,18 +56,12 @@ public:
         CC_SAFE_DELETE(pret);
         return nullptr;
     }
-    void pushLayer(float duration, CCLayer* layer) {
-        auto scene = CCScene::create();
-        scene->addChild(layer);
-        CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(duration, scene));
-    }
     void onBtn(CCObject* h) {
         //it might be __pad48 but idk
         auto searchlay = static_cast<LevelSearchLayer*>(static_cast<CCNode*>(h)->getParent()->getParent());
         auto searchObj = searchlay->getSearchObject(SearchType::Search, gd::string(searchlay->m_searchInput->getString()));
 
-        getTS;
-        this->pushLayer(transitionSpeed, PerformRandomLevel::create());
+        geode::log::info("we passes this point");
         #define ccstr(s) CCString::create(s)
         #define ccint(i) CCInteger::create(i)
         #define ccbool(b) CCInteger::create(int(b))
@@ -117,34 +87,37 @@ public:
             add("customSong", ccbool(searchObj->m_customSongFilter));
         };
         //i hope this one exist
-        CCHttpRequest* httpreq = new (std::nothrow) CCHttpRequest();
+        CCHttpRequest* httpreq = new CCHttpRequest();
         std::string url = Mod::get()->getSettingValue<std::string>("gdps") + "/getGJLevels21.php";
+        auto stringified = this->CCDictDump(the);
+        std::vector<gd::string> header = { "Content-Type: application/x-www-form-urlencoded", "Content-Length: "+std::to_string(stringified.length())};
         httpreq->setRequestType(CCHttpRequest::HttpRequestType::kHttpPost);
         httpreq->setUrl(url.c_str());
-        auto stringified = this->CCDictDump(the).c_str();
-        httpreq->setRequestData(stringified, sizeof(stringified));
+        httpreq->setHeaders(header);
+        httpreq->setRequestData(stringified.c_str(), stringified.length());
         httpreq->setResponseCallback(this, httpresponse_selector(PerformRandomLevel::response));
+        geode::log::info(stringified);
         CCHttpClient::getInstance()->send(httpreq);
     }
     void response(CCHttpClient* client, CCHttpResponse* response) {
         auto responseData = response->getResponseData();
         std::string egg(responseData->begin(), responseData->end());
-        gd::string iforgor(egg);
         
         DS_Dictionary* stringmanager = new DS_Dictionary();
         auto levelObj = GJGameLevel::create();
         
         //levels, authors, songs
-        std::vector<gd::string> splitted = split(iforgor, '#');
+        std::vector<std::string> splitted = split(egg, '#');
         
 
         //split levels response
-        std::vector<gd::string> wtf = split(splitted[0], '|');
+        std::vector<std::string> wtf = split(splitted[0], '|');
 
         //get random level
-        gd::string level = *select_randomly(wtf.begin(), wtf.end());
-        std::vector<gd::string> mumei = split(level, ':');
+        std::string level = *select_randomly(wtf.begin(), wtf.end());
+        std::vector<std::string> mumei = split(level, ':');
 
+        geode::log::info(egg);
         for (int i = 0; i < mumei.size(); i++) {
             if (i % 2 == 0) {
                 switch (std::stoi(mumei[i])) {
@@ -161,39 +134,35 @@ public:
         }
         
         getTS;
-        this->pushLayer(transitionSpeed, LevelInfoLayer::create(levelObj));
+        auto scene = CCScene::create();           
+        auto layer = LevelInfoLayer::create(levelObj);
+        scene->addChild(layer);
+        CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(transitionSpeed, scene)); 
     }
     //helper funcs
     std::string CCDictDump(CCDictionary* dict) {
-        std::string mim = "{ # }";
         #define contains(item, arr) std::find(arr.begin(), arr.end(), item) != arr.end()
         //hardcoding time
         CCDictElement* element;
         std::vector<std::string> stritems = { "secret", "str" };
         std::vector<std::string> intitems = { "gameVersion", "binaryVersion", "type", "gdw", "page", "uncompleted", "onlyCompleted", "epic", "coins", "featured", "twoPlayer", "song", "customSong", "original", "star" };
         std::string kv = "";
+
+        int h = 0;
+        int elems = dict->allKeys()->count();
         CCDICT_FOREACH(dict, element) {
             std::string the = element->getStrKey();
-            kv += "\"" + the + "\" :";
+            kv += the + "=";
             if (contains(the, stritems)) {
-                kv += "\"";
                 kv += static_cast<CCString*>(element->getObject())->getCString();
-                kv += "\"";
             }
             else if (contains(the, intitems)) {
                 kv += std::to_string(static_cast<CCInteger*>(element->getObject())->getValue());
             }
-            kv +=", ";
+            if (h != elems-1) kv +="&";
+            h++;
         }
-        this->replace(mim, "#", kv);
-        return mim;
-    }
-    bool replace(std::string& str, const std::string& from, const std::string& to) {
-        size_t start_pos = str.find(from);
-        if (start_pos == std::string::npos)
-            return false;
-        str.replace(start_pos, from.length(), to);
-        return true;
+        return kv;
     }
 };
 
@@ -204,14 +173,102 @@ class $modify(LevelSearchLayer) {
             searchbg->setContentSize(searchbg->getContentSize() + CCSize{ 30,0 });
             auto searchbtnmenu = this->getChildByID("search-button-menu");
             auto rndbtnmenu = CCMenuItemSpriteExtra::create(CCSprite::create("GJ_gradientBG.png"), this, menu_selector(PerformRandomLevel::onBtn));//temporary sprite
-            rnmdbtnmenu->setPosition(searchbtnmenu->getChildByID("search-user-button")->getPosition() + CCPoint{5,0});
+            rndbtnmenu->setPosition(searchbtnmenu->getChildByID("search-user-button")->getPosition() + CCPoint{50,0});
             searchbtnmenu->addChild(rndbtnmenu);
             searchbtnmenu->setPosition(searchbtnmenu->getPosition() - CCPoint{30, 0});
             #define move(node, point) node->setPosition(node->getPosition() + point)
-            move(searchbtnmenu->getChildByID("level-search-bar-bg"), CCPoint{-30,0});
-            move(searchbtnmenu->getChildByID("search-bar"), CCPoint{-30,0});
+            auto wtf = CCPoint{ -30,0 };
+            move(this->getChildByID("level-search-bar-bg"), wtf);
+            move(this->getChildByID("search-bar"), wtf);
             return true;
         }
         return false;
     }
+};
+
+struct option {
+    const char* name;
+    const char* key;
+    const char* info;
+};
+std::vector<option> gameplay;
+std::vector<std::string> gameplayOpts = {
+    "Auto-Retry",
+    "Show restart button",
+    "Auto-Checkpoints",
+    "Fast practice reset",
+    "Practice Death Effect",
+    "Show Percentage",
+    "High StartPos accuracy",
+    "Quick checkpoint mode",
+    "Disable shake effects",
+    "Switch spider teleport color",
+    "Switch dash fire color",
+    "Switch wave trail color",
+    "Enable move optimization",
+    "Just, dont...",
+    "Flip 2-Player Controls",
+    "Always Limit Controls",
+    "Disable explosion shake"
+};
+//-160
+//32
+//14,+16y
+class CategorizedOptionsLayer : public geode::Popup<std::string, std::vector<option>> {
+protected:
+    std::vector<option> options;
+    std::vector<CCLayer*> pages;
+    int xpos, ypos;
+    bool setup(std::string name, std::vector<option> opts) override {
+        getChildOfType<CCLabelBMFont>(getChildOfType<CCLayer>(this,0),0);
+        options = opts;
+        return true;
+    }
+public:
+    void addToggle(const char* name, const char* key, const char* info) {
+        for (auto& i : options) {
+            if (name == i.name) {
+                auto toggler = CCMenuItemToggler::create(
+                    CCSprite::create("GJ_checkOff_001.png"),
+                    CCSprite::create("GJ_checkOff_001.png"),
+                    this,
+                    menu_selector(CategorizedOptionsLayer::egg)
+                );
+                toggler->setAnchorPoint(CCPoint{0.5f,0.5f});
+                toggler->setUserObject(CCString::create(info));
+            };
+        }
+    };
+    void egg(CCObject*b) {
+
+    }
+};
+
+class $modify(MoreOptionsLayer) {
+    void addToggle(const char* name, const char* key, const char* info) {
+        /*
+#define h(opt)  \
+if (std::find(GEODE_CONCAT(opt,Opts).begin(),GEODE_CONCAT(opt,Opts).end(),name) != GEODE_CONCAT(opt,Opts).end()) { \
+    option o;  \
+    o.name=name;  \
+    o.key=key; \
+    o.info=info;  \
+    opt.push_back(o); \
+}
+
+    h(gameplay);
+    */
+    std::string h = "\nName: " + std::string(name) + "\nKey: " + std::string(key);// + "\nInfo: " + std::string(info);
+    geode::log::info(h);
+    }
+/*
+    bool init() {
+        bool h = MoreOptionsLayer::init();
+        this->removeFromParent();
+        return h;
+    };
+
+    static MoreOptionsLayer* create() {
+        auto h = new MoreOptionsLayer()
+    }*/
 };
