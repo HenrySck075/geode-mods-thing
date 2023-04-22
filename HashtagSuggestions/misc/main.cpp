@@ -197,8 +197,9 @@ std::vector<option> name; \
 std::vector<std::string> GEODE_CONCAT(name, Opts) = list;\
 std::vector<std::string> GEODE_CONCAT(name, Desc) = desc
 
-createOptionList(gameplay, {
-    "Fast practice reset",
+#define protect(...) __VA_ARGS__
+createOptionList(gameplay, protect({
+    "Fast practice reset", 
     "Practice Death Effect",
     "Show Percentage",
     "Quick checkpoint mode",
@@ -206,8 +207,8 @@ createOptionList(gameplay, {
     "Switch dash fire color",
     "Switch wave trail color",
     "Just, dont...",
-    "Default mini icon",
-}, {
+    "Default mini icon"
+}), protect({
     "Reset time after crash in practice mode lowered from 1s t 0.5s",
     "Show special death effects in practice mode",
     "Show the current percentage next to the progress bar.",
@@ -217,8 +218,8 @@ createOptionList(gameplay, {
     "Toggle between using main/secondary color for wave trail.",
     "This option doesn't do anything... Well, nothing useful.",
     "Player icon in mimi mode is set to default"
-});
-createOptionList(perf, {
+}));
+createOptionList(perf, protect({
     "High StartPos accuracy",
     "Smooth Fix",
     "Force Smooth Fix",
@@ -226,7 +227,7 @@ createOptionList(perf, {
     "High Capacity Mode",
     "Load songs to memory",
     "Smooth fix in editor"
-}, {
+}), protect({
     "Increases the accuracy of start position calculations, but loading a start position takes longer.",
     "Makes some optimizations that can reduce lag. Disable if game speed becomes inconsistent.",
     "Smooth fix is normally disabled if a level is lagging, this forces smooth fix to remain enabled. Toggle to test if the performance is better with smooth fix always enabled.",
@@ -234,8 +235,8 @@ createOptionList(perf, {
     "Increases draw capacity for batch nodes at level start. Use to improve performance on some levels. May cause issues on low-end devices.",
     "Songs are loaded to memory before playing. Increase load time but can improve performance.",
     "Enabled Smooth Fix while playtesting in the editor."
-});
-createOptionList(access, {
+}));
+createOptionList(access, protect({
     "Flip 2-Player Controls",
     "Always Limit Controls",
     "Disable explosion shake",
@@ -245,8 +246,8 @@ createOptionList(access, {
     "Show restart button",
     "Auto-Checkpoints",
     "Flip pause button",
-    "Higher audio quality\n(req. restart)",
-}, {
+    "Higher audio quality\n(req. restart)"
+}), protect({
     "Flip which side controls which player during 2-player dual mode.",
     "Player 1 controls are limited to one side even if the dual mode is inactive.",
     "",
@@ -256,20 +257,19 @@ createOptionList(access, {
     "Always show the restart button on the pause screen.",
     "Automatically place checkpoints while in practice mode.",
     "",
-    "Switch sample rate from 24000 to 44100",
-});
-createOptionsList(online, {
+    "Switch sample rate from 24000 to 44100"
+}));
+createOptionList(online, protect({
     "Increase max levels",
     "Inc Local Levels Per Page",
     "Show leaderboard percent",
-    "Disable high object alert",
-},{
+    "Disable high object alert"
+}),protect({
     "Increases the maximum saved levels from 20 to 100.",
     "Increases Created/Saved levels per page from 10 to 20.",
     "To upload your level progress to the Level Leaderboard in 2.11 you need to replay levels completed before 2.11. This option toggles viewing the Leaderboard percentage you have on the levels.",
-    "The alert showed when trying to play levels with a high object count is removed.",
-
-});
+    "The alert showed when trying to play levels with a high object count is removed."
+}));
 //-160
 //32
 //14,+16y
@@ -280,10 +280,10 @@ protected:
     int focus = -1;
     int xpos = -160, ypos = 80;
     bool setup(std::string name, std::vector<option> opts) override {
-        this->setTitle(this);
+        this->setTitle(name);
         options = opts;
 	auto kbtn = CCMenuItemSpriteExtra::create(ButtonSprite::create("Keys", "goldFont.png", "GJ_button_04.png"),this,menu_selector(this->what));
-	kbtn->setPosiion(CCPoint{150,110});
+	kbtn->setPosition(CCPoint{150,110});
 
 	auto winWidth = CCDirector::sharedDirector()->getWinSize().width;
 
@@ -293,16 +293,17 @@ protected:
 	pager->setID("idk");
 #define itltcp(scale,id) \
 auto spr = CCSprite::createWithSpriteFrameName("GJ_backBtn_001.png"); \
-spr->setScaleX((float) scale); \
+auto fscale = (float) scale;\
+spr->setScaleX(); \
 spr->setTag(scale); \
-auto pageExplorer##id = CCMenuItemSpriteExtra::create(spr,this,menu_selector()); \
+auto GEODE_CONCAT(pageExplorer,id) = CCMenuItemSpriteExtra::create(spr,this,menu_selector(CategorizedOptionsLayer::movePage)); \
 if (scale == 1) { \
     pos = 36; \
 } \
 else { \
     pos = winWidth - 36; \
 }; \
-pager->addChild(pageExplorer##id);
+pager->addChild(GEODE_CONCAT(pageExplorer,id));
 
 	itltcp(1,1);
 	itltcp(-1,2);
@@ -332,8 +333,8 @@ public:
 	} else {
 	    CCObject*s;
 	    CCARRAY_FOREACH(m_mainLayer->getChildByID("idk")->getChildren(), s) {
-		auto btn = static_cast<CCMenuItem*>(s);
-		btn->setVisible(true);
+            auto btn = static_cast<CCMenuItem*>(s);
+            btn->setVisible(true);
 	    }
 	}
     }
@@ -346,58 +347,58 @@ public:
         );
         toggler->setAnchorPoint(CCPoint{0.5f,0.5f});
         toggler->setUserObject(CCString::create(opt.key));
-	toggler->setPosition(0,0);
+        toggler->setPosition(0,0);
 
-	auto label = CCLabelBMFont::create(opt.name, "bigFont.fnt");
-	label->setAnchorPoint(CCPoint{0,0.5});
-	label->setPosition(26, 0);
+        auto label = CCLabelBMFont::create(opt.name, "bigFont.fnt");
+        label->setAnchorPoint(CCPoint{0,0.5});
+        label->setPosition(26, 0);
 
-	auto menu = CCMenu::create();
-	menu = setAnchorPoint(CCPoint{0.5,0.5});
-	menu->setPosition(xpos, ypos);
-	menu->addChild(toggler);
-	if (opt.desc != "") {
-	    auto info = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_infoBtn_001.png"),this,menu_selector());
-	    info->setPosition(-18,16);
-	    menu->addChild(info);
-	};
-	menu->addChild(label);
-#define ihaveto \
-auto layer = CCLayer::create(); \
-layer->setAnchorPoint(CCPoint{0.5,0.5}); \
-layer->addChild(menu); \
-pages->push_back(layer); \
-focus++;
+        auto menu = CCMenu::create();
+        menu->setAnchorPoint(CCPoint{0.5,0.5});
+        menu->setPosition(xpos, ypos);
+        menu->addChild(toggler);
+        if (opt.desc != "") {
+            auto info = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_infoBtn_001.png"),this,menu_selector());
+            info->setPosition(-18,16);
+            menu->addChild(info);
+        };
+        menu->addChild(label);
+    #define ihaveto \
+    auto layer = CCLayer::create(); \
+    layer->setAnchorPoint(CCPoint{0.5,0.5}); \
+    layer->addChild(menu); \
+    pages->push_back(layer); \
+    focus++;
 
-	//if no page created
-	if (focus == -1) {
-	    ihaveto
-	}
-	//else if there's 10 options in a page
-	else if (pages[focus]->getChildrenCount() == 10) {
-	    ihaveto
-	}
-	//else
-	else {
-	    pages[focus]->addChild(menu);
-	}
+        //if no page created
+        if (focus == -1) {
+            ihaveto
+        }
+        //else if there's 10 options in a page
+        else if (pages[focus]->getChildrenCount() == 10) {
+            ihaveto
+        }
+        //else
+        else {
+            pages[focus]->addChild(menu);
+        }
 
-	//lastly, change the position variables
-	if (xpos == -160) {
-	    xpos = 32;
-	}
-	else {
-	    xpos = -160;
-	    ypos -= 60;
-	}
-    };
-    void rice(CCObject*b){
-	FLAlertLayer::create("Info", static_cast<CCString>(static_cast<CCMenuItem*>(b)->getUserObject())->getCString(), "OK")->show();
-    }
-    void egg(CCObject*b) {
-	auto btn = static_cast<CCMenuItemToggler*>(b);
-	auto info = static_cast<CCString>(->getUserObject())->getCString();
-	GameManager::sharedState()->setGameVariable(info, btn->isToggled());
+        //lastly, change the position variables
+        if (xpos == -160) {
+            xpos = 32;
+        }
+        else {
+            xpos = -160;
+            ypos -= 60;
+        }
+        };
+        void rice(CCObject*b){
+        FLAlertLayer::create("Info", static_cast<CCString*>(static_cast<CCMenuItem*>(b)->getUserObject())->getCString(), "OK")->show();
+        }
+        void egg(CCObject*b) {
+        auto btn = static_cast<CCMenuItemToggler*>(b);
+        auto info = static_cast<CCString*>(btn->getUserObject())->getCString();
+        GameManager::sharedState()->setGameVariable(info, btn->isToggled());
     }
 };
 
