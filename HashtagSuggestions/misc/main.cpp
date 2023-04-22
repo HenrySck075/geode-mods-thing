@@ -90,7 +90,7 @@ public:
         CCHttpRequest* httpreq = new CCHttpRequest();
         std::string url = Mod::get()->getSettingValue<std::string>("gdps") + "/getGJLevels21.php";
         auto stringified = this->CCDictDump(the);
-        std::vector<gd::string> header = { "Content-Type: application/x-www-form-urlencoded", "Content-Length: "+std::to_string(stringified.length())};
+        std::vector<gd::string> header = {""};
         httpreq->setRequestType(CCHttpRequest::HttpRequestType::kHttpPost);
         httpreq->setUrl(url.c_str());
         httpreq->setHeaders(header);
@@ -170,7 +170,7 @@ class $modify(LevelSearchLayer) {
     bool init() {
         if (LevelSearchLayer::init()) {
             auto searchbg = static_cast<CCScale9Sprite*>(this->getChildByID("level-search-bg"));
-            searchbg->setContentSize(searchbg->getContentSize() + CCSize{ 30,0 });
+            searchbg->setContentSize(searchbg->getContentSize() + CCSize{ 37,0 });
             auto searchbtnmenu = this->getChildByID("search-button-menu");
             auto rndbtnmenu = CCMenuItemSpriteExtra::create(CCSprite::create("GJ_gradientBG.png"), this, menu_selector(PerformRandomLevel::onBtn));//temporary sprite
             rndbtnmenu->setPosition(searchbtnmenu->getChildByID("search-user-button")->getPosition() + CCPoint{50,0});
@@ -190,27 +190,86 @@ struct option {
     const char* name;
     const char* key;
     const char* info;
+    std::string desc;
 };
-std::vector<option> gameplay;
-std::vector<std::string> gameplayOpts = {
-    "Auto-Retry",
-    "Show restart button",
-    "Auto-Checkpoints",
+#define createOptionList(name, list, desc) \
+std::vector<option> name; \
+std::vector<std::string> GEODE_CONCAT(name, Opts) = list;\
+std::vector<std::string> GEODE_CONCAT(name, Desc) = desc
+
+createOptionList(gameplay, {
     "Fast practice reset",
     "Practice Death Effect",
     "Show Percentage",
-    "High StartPos accuracy",
     "Quick checkpoint mode",
-    "Disable shake effects",
     "Switch spider teleport color",
     "Switch dash fire color",
     "Switch wave trail color",
-    "Enable move optimization",
     "Just, dont...",
+    "Default mini icon",
+}, {
+    "Reset time after crash in practice mode lowered from 1s t 0.5s",
+    "Show special death effects in practice mode",
+    "Show the current percentage next to the progress bar.",
+    "Tries to place checkpoints more often while in practice mode.",
+    "Toggle between using main/secondary color for spider teleport effect.",
+    "Toggle between using main/secondary color for dash fire effect.",
+    "Toggle between using main/secondary color for wave trail.",
+    "This option doesn't do anything... Well, nothing useful.",
+    "Player icon in mimi mode is set to default"
+});
+createOptionList(perf, {
+    "High StartPos accuracy",
+    "Smooth Fix",
+    "Force Smooth Fix",
+    "Enable move optimization",
+    "High Capacity Mode",
+    "Load songs to memory",
+    "Smooth fix in editor"
+}, {
+    "Increases the accuracy of start position calculations, but loading a start position takes longer.",
+    "Makes some optimizations that can reduce lag. Disable if game speed becomes inconsistent.",
+    "Smooth fix is normally disabled if a level is lagging, this forces smooth fix to remain enabled. Toggle to test if the performance is better with smooth fix always enabled.",
+    "Optimize some moving objects. Increases performance but can create some minor visual glitches.",
+    "Increases draw capacity for batch nodes at level start. Use to improve performance on some levels. May cause issues on low-end devices.",
+    "Songs are loaded to memory before playing. Increase load time but can improve performance.",
+    "Enabled Smooth Fix while playtesting in the editor."
+});
+createOptionList(access, {
     "Flip 2-Player Controls",
     "Always Limit Controls",
-    "Disable explosion shake"
-};
+    "Disable explosion shake",
+    "Disable shake effects",
+    "Disable gravity effect"
+    "Auto-Retry",
+    "Show restart button",
+    "Auto-Checkpoints",
+    "Flip pause button",
+    "Higher audio quality\n(req. restart)",
+}, {
+    "Flip which side controls which player during 2-player dual mode.",
+    "Player 1 controls are limited to one side even if the dual mode is inactive.",
+    "",
+    "",
+    "",
+    "",
+    "Always show the restart button on the pause screen.",
+    "Automatically place checkpoints while in practice mode.",
+    "",
+    "Switch sample rate from 24000 to 44100",
+});
+createOptionsList(online, {
+    "Increase max levels",
+    "Inc Local Levels Per Page",
+    "Show leaderboard percent",
+    "Disable high object alert",
+},{
+    "Increases the maximum saved levels from 20 to 100.",
+    "Increases Created/Saved levels per page from 10 to 20.",
+    "To upload your level progress to the Level Leaderboard in 2.11 you need to replay levels completed before 2.11. This option toggles viewing the Leaderboard percentage you have on the levels.",
+    "The alert showed when trying to play levels with a high object count is removed.",
+
+});
 //-160
 //32
 //14,+16y
@@ -218,47 +277,152 @@ class CategorizedOptionsLayer : public geode::Popup<std::string, std::vector<opt
 protected:
     std::vector<option> options;
     std::vector<CCLayer*> pages;
-    int xpos, ypos;
+    int focus = -1;
+    int xpos = -160, ypos = 80;
     bool setup(std::string name, std::vector<option> opts) override {
-        getChildOfType<CCLabelBMFont>(getChildOfType<CCLayer>(this,0),0);
+        this->setTitle(this);
         options = opts;
+	auto kbtn = CCMenuItemSpriteExtra::create(ButtonSprite::create("Keys", "goldFont.png", "GJ_button_04.png"),this,menu_selector(this->what));
+	kbtn->setPosiion(CCPoint{150,110});
+
+	auto winWidth = CCDirector::sharedDirector()->getWinSize().width;
+
+	int pos;
+
+	auto pager = CCMenu::create();
+	pager->setID("idk");
+#define itltcp(scale,id) \
+auto spr = CCSprite::createWithSpriteFrameName("GJ_backBtn_001.png"); \
+spr->setScaleX((float) scale); \
+spr->setTag(scale); \
+auto pageExplorer##id = CCMenuItemSpriteExtra::create(spr,this,menu_selector()); \
+if (scale == 1) { \
+    pos = 36; \
+} \
+else { \
+    pos = winWidth - 36; \
+}; \
+pager->addChild(pageExplorer##id);
+
+	itltcp(1,1);
+	itltcp(-1,2);
+	for (option o : options) {
+	    this->addToggle(o);
+	}
+
+        m_mainLayer->addChild(kbtn);
+	m_mainLayer->addChild(pager);
+	m_mainLayer->setAnchorPoint(CCPoint{0.5f,0.5f});
         return true;
     }
+    void what(CCObject*n) {
+	KeybindingsLayer::create("what","is","love")->show();
+    }
+    void no(CCObject*h) {};
 public:
-    void addToggle(const char* name, const char* key, const char* info) {
-        for (auto& i : options) {
-            if (name == i.name) {
-                auto toggler = CCMenuItemToggler::create(
-                    CCSprite::create("GJ_checkOff_001.png"),
-                    CCSprite::create("GJ_checkOff_001.png"),
-                    this,
-                    menu_selector(CategorizedOptionsLayer::egg)
-                );
-                toggler->setAnchorPoint(CCPoint{0.5f,0.5f});
-                toggler->setUserObject(CCString::create(info));
-            };
-        }
-    };
-    void egg(CCObject*b) {
+    void movePage(CCObject*butter) {
+	pages[focus]->setVisible(false);
+	focus += static_cast<CCMenuItem*>(butter)->getTag();
+	pages[focus]->setVisible(true);
 
+	if (focus == 0) {
+	    getChildOfType<CCMenuItemSpriteExtra>(m_mainLayer->getChildByID("idk"),0)->setVisible(false);
+	} else if (focus == pages.size() - 1) {
+            getChildOfType<CCMenuItemSpriteExtra>(m_mainLayer->getChildByID("idk"),1)->setVisible(false);
+	} else {
+	    CCObject*s;
+	    CCARRAY_FOREACH(m_mainLayer->getChildByID("idk")->getChildren(), s) {
+		auto btn = static_cast<CCMenuItem*>(s);
+		btn->setVisible(true);
+	    }
+	}
+    }
+    void addToggle(option opt) {
+        auto toggler = CCMenuItemToggler::create(
+            CCSprite::create("GJ_checkOff_001.png"),
+            CCSprite::create("GJ_checkOff_001.png"),
+            this,
+            menu_selector(CategorizedOptionsLayer::egg)
+        );
+        toggler->setAnchorPoint(CCPoint{0.5f,0.5f});
+        toggler->setUserObject(CCString::create(opt.key));
+	toggler->setPosition(0,0);
+
+	auto label = CCLabelBMFont::create(opt.name, "bigFont.fnt");
+	label->setAnchorPoint(CCPoint{0,0.5});
+	label->setPosition(26, 0);
+
+	auto menu = CCMenu::create();
+	menu = setAnchorPoint(CCPoint{0.5,0.5});
+	menu->setPosition(xpos, ypos);
+	menu->addChild(toggler);
+	if (opt.desc != "") {
+	    auto info = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_infoBtn_001.png"),this,menu_selector());
+	    info->setPosition(-18,16);
+	    menu->addChild(info);
+	};
+	menu->addChild(label);
+#define ihaveto \
+auto layer = CCLayer::create(); \
+layer->setAnchorPoint(CCPoint{0.5,0.5}); \
+layer->addChild(menu); \
+pages->push_back(layer); \
+focus++;
+
+	//if no page created
+	if (focus == -1) {
+	    ihaveto
+	}
+	//else if there's 10 options in a page
+	else if (pages[focus]->getChildrenCount() == 10) {
+	    ihaveto
+	}
+	//else
+	else {
+	    pages[focus]->addChild(menu);
+	}
+
+	//lastly, change the position variables
+	if (xpos == -160) {
+	    xpos = 32;
+	}
+	else {
+	    xpos = -160;
+	    ypos -= 60;
+	}
+    };
+    void rice(CCObject*b){
+	FLAlertLayer::create("Info", static_cast<CCString>(static_cast<CCMenuItem*>(b)->getUserObject())->getCString(), "OK")->show();
+    }
+    void egg(CCObject*b) {
+	auto btn = static_cast<CCMenuItemToggler*>(b);
+	auto info = static_cast<CCString>(->getUserObject())->getCString();
+	GameManager::sharedState()->setGameVariable(info, btn->isToggled());
     }
 };
 
 class $modify(MoreOptionsLayer) {
     void addToggle(const char* name, const char* key, const char* info) {
-        /*
+        
 #define h(opt)  \
-if (std::find(GEODE_CONCAT(opt,Opts).begin(),GEODE_CONCAT(opt,Opts).end(),name) != GEODE_CONCAT(opt,Opts).end()) { \
+auto begin = GEODE_CONCAT(opt,Opts).begin(); \
+auto idx = std::find(begin,GEODE_CONCAT(opt,Opts).end(),name); \
+if (idx != GEODE_CONCAT(opt,Opts).end()) { \
+    int location = idx - begin;\
     option o;  \
     o.name=name;  \
     o.key=key; \
     o.info=info;  \
+    o.desc = GEODE_CONCAT(opt, Desc)[location]; \
     opt.push_back(o); \
 }
 
     h(gameplay);
-    */
-    std::string h = "\nName: " + std::string(name) + "\nKey: " + std::string(key);// + "\nInfo: " + std::string(info);
+    h(perf);
+    h(access);
+    h(online);
+    
+    std::string h = "\nName: " + std::string(name) + "\nKey: " + std::string(key);
     geode::log::info(h);
     }
 /*
