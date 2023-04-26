@@ -10,7 +10,8 @@
 #include <typeinfo>
 
 using namespace geode::prelude;
-
+#define ccsprwfn(sprite) CCSprite::createWithSpriteFrameName(sprite)
+#define ccmise(sprite,target,selector) CCMenuItemSpriteExtra::create(sprite,target,selector)
 #define getTS float transitionSpeed = (float) Mod::get()->getSettingValue<double>("transition-speed")
 class $modify(CCTransitionFade) {
     static CCTransitionFade* create(float d, CCScene * s) {
@@ -172,7 +173,7 @@ class $modify(LevelSearchLayer) {
             auto searchbg = static_cast<CCScale9Sprite*>(this->getChildByID("level-search-bg"));
             searchbg->setContentSize(searchbg->getContentSize() + CCSize{ 37,0 });
             auto searchbtnmenu = this->getChildByID("search-button-menu");
-            auto rndbtnmenu = CCMenuItemSpriteExtra::create(CCSprite::create("GJ_gradientBG.png"), this, menu_selector(PerformRandomLevel::onBtn));//temporary sprite
+            auto rndbtnmenu = ccmise(CCSprite::create("GJ_gradientBG.png"), this, menu_selector(PerformRandomLevel::onBtn));//temporary sprite
             rndbtnmenu->setPosition(searchbtnmenu->getChildByID("search-user-button")->getPosition() + CCPoint{50,0});
             searchbtnmenu->addChild(rndbtnmenu);
             searchbtnmenu->setPosition(searchbtnmenu->getPosition() - CCPoint{30, 0});
@@ -189,251 +190,257 @@ class $modify(LevelSearchLayer) {
 struct option {
     const char* name;
     const char* key;
-    const char* info;
     std::string desc;
 };
-#define createOptionList(name, list, desc) \
+
+#define createOptionList(name, data) \
 std::vector<option> name; \
-std::vector<std::string> GEODE_CONCAT(name, Opts) = list;\
-std::vector<std::string> GEODE_CONCAT(name, Desc) = desc
+std::vector<std::vector<std::string>> GEODE_CONCAT(name, Data) = data
 
 #define protect(...) __VA_ARGS__
 createOptionList(gameplay, protect({
-    "Fast practice reset", 
-    "Practice Death Effect",
-    "Show Percentage",
-    "Quick checkpoint mode",
-    "Switch spider teleport color",
-    "Switch dash fire color",
-    "Switch wave trail color",
-    "Just, dont...",
-    "Default mini icon"
-}), protect({
-    "Reset time after crash in practice mode lowered from 1s t 0.5s",
-    "Show special death effects in practice mode",
-    "Show the current percentage next to the progress bar.",
-    "Tries to place checkpoints more often while in practice mode.",
-    "Toggle between using main/secondary color for spider teleport effect.",
-    "Toggle between using main/secondary color for dash fire effect.",
-    "Toggle between using main/secondary color for wave trail.",
-    "This option doesn't do anything... Well, nothing useful.",
-    "Player icon in mimi mode is set to default"
+    {"Fast practice reset", "Reset time after crash in practice mode lowered from 1s t 0.5s", "0052"},
+    {"Practice Death Effect", "Show special death effects in practice mode", "0100"},
+    {"Quick checkpoint mode", "Tries to place checkpoints more often while in practice mode.", "0068"},
+    {"Switch spider teleport color", "Toggle between using main/secondary color for spider teleport effect.","0061"},
+    {"Switch dash fire color", "Toggle between using main/secondary color for dash fire effect.", "0062"},
+    {"Switch wave trail color", "Toggle between using main/secondary color for wave trail.", "0096"},
+    {"Just, dont...", "This option doesn't do anything... Well, nothing useful.", "0095"},
+    {"Default mini icon", "Player icon in mimi mode is set to default", "0060"}
 }));
 createOptionList(perf, protect({
-    "High StartPos accuracy",
-    "Smooth Fix",
-    "Force Smooth Fix",
-    "Enable move optimization",
-    "High Capacity Mode",
-    "Load songs to memory",
-    "Smooth fix in editor"
-}), protect({
-    "Increases the accuracy of start position calculations, but loading a start position takes longer.",
-    "Makes some optimizations that can reduce lag. Disable if game speed becomes inconsistent.",
-    "Smooth fix is normally disabled if a level is lagging, this forces smooth fix to remain enabled. Toggle to test if the performance is better with smooth fix always enabled.",
-    "Optimize some moving objects. Increases performance but can create some minor visual glitches.",
-    "Increases draw capacity for batch nodes at level start. Use to improve performance on some levels. May cause issues on low-end devices.",
-    "Songs are loaded to memory before playing. Increase load time but can improve performance.",
-    "Enabled Smooth Fix while playtesting in the editor."
+    {"High StartPos accuracy", "Increases the accuracy of start position calculations, but loading a start position takes longer.", "0067"}, 
+    {"Smooth Fix", "Makes some optimizations that can reduce lag. Disable if game speed becomes inconsistent.", "0023"},
+    {"Force Smooth Fix", "Smooth fix is normally disabled if a level is lagging, this forces smooth fix to remain enabled. Toggle to test if the performance is better with smooth fix always enabled.", "0101"},
+    {"Enable move optimization", "Optimize some moving objects. Increases performance but can create some minor visual glitches.", "0065"},
+    {"High Capacity Mode", "Increases draw capacity for batch nodes at level start. Use to improve performance on some levels. May cause issues on low-end devices.", "0066"},
+    {"Load songs to memory", "Songs are loaded to memory before playing. Increase load time but can improve performance.", "0019"},
+    {"Smooth fix in editor", "Enabled Smooth Fix while playtesting in the editor.", "0102"}
 }));
 createOptionList(access, protect({
-    "Flip 2-Player Controls",
-    "Always Limit Controls",
-    "Disable explosion shake",
-    "Disable shake effects",
-    "Disable gravity effect"
-    "Auto-Retry",
-    "Show restart button",
-    "Auto-Checkpoints",
-    "Flip pause button",
-    "Higher audio quality\n(req. restart)"
-}), protect({
-    "Flip which side controls which player during 2-player dual mode.",
-    "Player 1 controls are limited to one side even if the dual mode is inactive.",
-    "",
-    "",
-    "",
-    "",
-    "Always show the restart button on the pause screen.",
-    "Automatically place checkpoints while in practice mode.",
-    "",
-    "Switch sample rate from 24000 to 44100"
+    {"Flip 2-Player Controls","Flip which side controls which player during 2-player dual mode.","0010"},
+    {"Always Limit Controls", "Player 1 controls are limited to one side even if the dual mode is inactive.","0011"},
+    {"Disable explosion shake", "", "0014"},
+    {"Disable shake effects", "", "0081"},
+    {"Disable gravity effect", "", "0072"},
+    {"Disable Thumbstick", "Disable mouse movement using the controller thumb stick.", "0028"},
+    {"Auto-Retry", "", "0026"},
+    {"Show restart button", "Always show the restart button on the pause screen.", "0074"},
+    {"Show Percentage", "Show the current percentage next to the progress bar.", "0040"},
+    {"Auto-Checkpoints", "Automatically place checkpoints while in practice mode.", "0027"},
+    {"Flip pause button", "", "0015"}
 }));
 createOptionList(online, protect({
-    "Increase max levels",
-    "Inc Local Levels Per Page",
-    "Show leaderboard percent",
-    "Disable high object alert"
-}),protect({
-    "Increases the maximum saved levels from 20 to 100.",
-    "Increases Created/Saved levels per page from 10 to 20.",
-    "To upload your level progress to the Level Leaderboard in 2.11 you need to replay levels completed before 2.11. This option toggles viewing the Leaderboard percentage you have on the levels.",
-    "The alert showed when trying to play levels with a high object count is removed."
+    {"Increase max levels", "Increases the maximum saved levels from 20 to 100.", "0042"},
+    {"Inc Local Levels Per Page","Increases Created/Saved levels per page from 10 to 20.", "0093"},
+    {"Show leaderboard percent","To upload your level progress to the Level Leaderboard in 2.11 you need to replay levels completed before 2.11. This option toggles viewing the Leaderboard percentage you have on the levels.","0099"},
+    {"Disable high object alert", "The alert showed when trying to play levels with a high object count is removed.", "0082"}
 }));
-//-160
-//32
-//14,+16y
+
+
+
+#define paginatorSetup \
+int focus = 0; \
+std::vector<CCLayer*> pages; \
+CCMenu* paginatorMenu;\
+void paging(CCObject* b) {\
+    auto btn = static_cast<CCMenuItem*>(b); \
+    int side = btn->getTag(); \
+    pages[focus]->setVisible(false); \
+    focus += side; \
+    pages[focus]->setVisible(true); \
+    if (focus == 0 || focus == pages.size()) {btn->setVisible(false);} \
+    else {paginatorMenu->getChildByTag(-side)->setVisible(true);} \
+}
+
+#define pagina(id, cls) \
+auto GEODE_CONCAT(paginator, id) = ccmise(CCSprite::createWithSpriteFrameName("GJ_backBtn_001.png"),this,menu_selector(cls::paging)); \
+x = 20.5; \
+side = -1; \
+if (id == 2) { \
+    x = ws.width - 20.5;\
+    side = 1; \
+} \
+GEODE_CONCAT(paginator, id)->setPosition(x,ws.height/2); \
+GEODE_CONCAT(paginator, id)->setScaleX(side); \
+paginatorMenu->addChild(GEODE_CONCAT(paginator, id))
+
+#define create_paginator(cls) \
+float x; int side;\
+pagina(1, cls);\
+pagina(2, cls)
+
+
+//-160, 80 (toggler pos)
+//14,+16y (info btn)
+//14 (label)
+//48 (gap)
+
+// https://www.programiz.com/cpp-programming/multilevel-multiple-inheritance#:~:text=C%2B%2B%20Multiple%20Inheritance
 class CategorizedOptionsLayer : public geode::Popup<std::string, std::vector<option>> {
 protected:
-    std::vector<option> options;
-    std::vector<CCLayer*> pages;
-    int focus = -1;
-    int xpos = -160, ypos = 80;
-    bool setup(std::string name, std::vector<option> opts) override {
-        this->setTitle(name);
-        options = opts;
-	auto kbtn = CCMenuItemSpriteExtra::create(ButtonSprite::create("Keys", "goldFont.png", "GJ_button_04.png"),this,menu_selector(this->what));
-	kbtn->setPosition(CCPoint{150,110});
+    paginatorSetup;
+    int x = -160, y = 80, optsInPage = 0;
 
-	auto winWidth = CCDirector::sharedDirector()->getWinSize().width;
-
-	int pos;
-
-	auto pager = CCMenu::create();
-	pager->setID("idk");
-#define itltcp(scale,id) \
-auto spr = CCSprite::createWithSpriteFrameName("GJ_backBtn_001.png"); \
-auto fscale = (float) scale;\
-spr->setScaleX(); \
-spr->setTag(scale); \
-auto GEODE_CONCAT(pageExplorer,id) = CCMenuItemSpriteExtra::create(spr,this,menu_selector(CategorizedOptionsLayer::movePage)); \
-if (scale == 1) { \
-    pos = 36; \
-} \
-else { \
-    pos = winWidth - 36; \
-}; \
-pager->addChild(GEODE_CONCAT(pageExplorer,id));
-
-	itltcp(1,1);
-	itltcp(-1,2);
-	for (option o : options) {
-	    this->addToggle(o);
-	}
-
-        m_mainLayer->addChild(kbtn);
-	m_mainLayer->addChild(pager);
-	m_mainLayer->setAnchorPoint(CCPoint{0.5f,0.5f});
+    bool setup(std::string name, std::vector<option> opt) override {
+        this->setTitle(name, "bigFont.fnt");
+        for (option i : opt) {
+            this->addToggle(i);
+        }
+        auto ws = CCDirector::sharedDirector()->getWinSize();
+        create_paginator(CategorizedOptionsLayer);
         return true;
     }
-    void what(CCObject*n) {
-	KeybindingsLayer::create("what","is","love")->show();
-    }
-    void no(CCObject*h) {};
-public:
-    void movePage(CCObject*butter) {
-	pages[focus]->setVisible(false);
-	focus += static_cast<CCMenuItem*>(butter)->getTag();
-	pages[focus]->setVisible(true);
-
-	if (focus == 0) {
-	    getChildOfType<CCMenuItemSpriteExtra>(m_mainLayer->getChildByID("idk"),0)->setVisible(false);
-	} else if (focus == pages.size() - 1) {
-            getChildOfType<CCMenuItemSpriteExtra>(m_mainLayer->getChildByID("idk"),1)->setVisible(false);
-	} else {
-	    CCObject*s;
-	    CCARRAY_FOREACH(m_mainLayer->getChildByID("idk")->getChildren(), s) {
-            auto btn = static_cast<CCMenuItem*>(s);
-            btn->setVisible(true);
-	    }
-	}
-    }
     void addToggle(option opt) {
+        auto ws = CCDirector::sharedDirector()->getWinSize();
+        
         auto toggler = CCMenuItemToggler::create(
-            CCSprite::create("GJ_checkOff_001.png"),
-            CCSprite::create("GJ_checkOff_001.png"),
-            this,
-            menu_selector(CategorizedOptionsLayer::egg)
-        );
-        toggler->setAnchorPoint(CCPoint{0.5f,0.5f});
-        toggler->setUserObject(CCString::create(opt.key));
-        toggler->setPosition(0,0);
+            ccsprwfn("GJ_checkOff_001.png"),
+            ccsprwfn("GJ_checkOn_001.png"),
+            this, menu_selector(CategorizedOptionsLayer::onToggle));
+        toggler->setUserObject(ccstr(opt.key));
+        toggler->setPosition(x,y);
 
-        auto label = CCLabelBMFont::create(opt.name, "bigFont.fnt");
-        label->setAnchorPoint(CCPoint{0,0.5});
-        label->setPosition(26, 0);
+        auto optName = CCLabelBMFont::create(opt.name, "bigFont.fnt");
+        optName->setPosition(x-14,y);
+        optName->setAnchorPoint(ccp(0,0.5));
 
-        auto menu = CCMenu::create();
-        menu->setAnchorPoint(CCPoint{0.5,0.5});
-        menu->setPosition(xpos, ypos);
-        menu->addChild(toggler);
-        if (opt.desc != "") {
-            auto info = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_infoBtn_001.png"),this,menu_selector());
-            info->setPosition(-18,16);
-            menu->addChild(info);
+        if (focus == pages.size()) {
+            auto page = CCLayer::create();
+            page->setAnchorPoint(ccp(0.5,0.5));
+            pages.push_back(page);
+            m_mainLayer->addChild(page);
+            focus++;
         };
-        menu->addChild(label);
-    #define ihaveto \
-    auto layer = CCLayer::create(); \
-    layer->setAnchorPoint(CCPoint{0.5,0.5}); \
-    layer->addChild(menu); \
-    pages->push_back(layer); \
-    focus++;
-
-        //if no page created
-        if (focus == -1) {
-            ihaveto
-        }
-        //else if there's 10 options in a page
-        else if (pages[focus]->getChildrenCount() == 10) {
-            ihaveto
-        }
-        //else
-        else {
+        CCMenu* menu;
+        auto memi = getChildOfType<CCMenu>(pages[focus], 0);
+        if (memi == nullptr) {
+            menu = CCMenu::create();
+            menu->setAnchorPoint(ccp(0.5,0.5));
             pages[focus]->addChild(menu);
-        }
-
-        //lastly, change the position variables
-        if (xpos == -160) {
-            xpos = 32;
-        }
+        } 
         else {
-            xpos = -160;
-            ypos -= 60;
-        }
+            menu = getChildOfType<CCMenu>(pages[focus], 0);
         };
-        void rice(CCObject*b){
-        FLAlertLayer::create("Info", static_cast<CCString*>(static_cast<CCMenuItem*>(b)->getUserObject())->getCString(), "OK")->show();
+        
+        if (opt.desc != "") {
+            auto info = ccmise(ccsprwfn("GJ_infoIcon_001.png"), this, menu_selector(CategorizedOptionsLayer::onDesc));
+            info->setContentSize(CCSize{11.5, 11.5});
+            info->setUserObject(ccstr(opt.desc));
+            info->setPosition(x-14, y+16);
+            menu->addChild(info);
         }
-        void egg(CCObject*b) {
-        auto btn = static_cast<CCMenuItemToggler*>(b);
-        auto info = static_cast<CCString*>(btn->getUserObject())->getCString();
-        GameManager::sharedState()->setGameVariable(info, btn->isToggled());
+        
+        menu->addChild(toggler);
+        pages[focus]->addChild(optName);
+        optsInPage++;
+
+        if (x == -160) {x = 14;}
+        else {
+            x = -328;
+            y -= 48;
+        }
+    }
+    void onToggle(CCObject* b) {
+        auto btn = static_cast<CCMenuItem*>(b);
+        std::string target = "gv_" + std::string(static_cast<CCString*>(btn->getUserObject())->getCString());
+        GameManager::sharedState()->setGameVariable(target.c_str(), !btn->isSelected());
+        btn->isSelected() ? btn->unselected() : btn->selected();
+    }
+    void onDesc(CCObject* b) {
+        FLAlertLayer::create("Info", static_cast<CCString*>(static_cast<CCMenuItem*>(b)->getUserObject())->getCString(), "OK")->show();
+    }
+public:
+    static CategorizedOptionsLayer* create(std::string name, std::vector<option> opt) {
+        auto ret = new CategorizedOptionsLayer();
+        if (ret && ret->init(284.f, 160.f, name, opt)) {
+            ret->autorelease();
+            return ret;
+        }
+        CC_SAFE_DELETE(ret);
+        return nullptr;
     }
 };
 
-class $modify(MoreOptionsLayer) {
-    void addToggle(const char* name, const char* key, const char* info) {
-        
-#define h(opt)  \
-auto begin = GEODE_CONCAT(opt,Opts).begin(); \
-auto idx = std::find(begin,GEODE_CONCAT(opt,Opts).end(),name); \
-if (idx != GEODE_CONCAT(opt,Opts).end()) { \
-    int location = idx - begin;\
-    option o;  \
-    o.name=name;  \
-    o.key=key; \
-    o.info=info;  \
-    o.desc = GEODE_CONCAT(opt, Desc)[location]; \
-    opt.push_back(o); \
-}
+class CategorizedOptionsEntry : public geode::Popup<int> {
+private:
+    int x = -80, y = 60;
+    paginatorSetup
 
-    h(gameplay);
-    h(perf);
-    h(access);
-    h(online);
-    
-    std::string h = "\nName: " + std::string(name) + "\nKey: " + std::string(key);
-    geode::log::info(h);
-    }
-/*
-    bool init() {
-        bool h = MoreOptionsLayer::init();
-        this->removeFromParent();
-        return h;
+    class OffsetListener : public TextInputDelegate {
+        virtual void textInputClosed(CCTextInputNode* h) {
+            GameManager::sharedState()->setIntGameVariable("timeOffset",std::stoi(h->getString()));
+        };
     };
 
-    static MoreOptionsLayer* create() {
-        auto h = new MoreOptionsLayer()
-    }*/
+    void movePos() {
+        if (x == 80) y -= 48;
+        x = -x;
+    };
+
+    void loadOption(CCObject*b){
+        std::vector<option> data;
+        std::string opt = static_cast<CCString*>(static_cast<CCMenuItem*>(b)->getUserObject())->getCString();
+
+        if (opt == "Gameplay") {
+            data = gameplay;
+        } else if (opt == "Performance") {
+            data = perf;
+        } else if (opt == "Accessibility") {
+            data = access;
+        } else if (opt == "Online") {
+            data = online;
+        }
+
+        CategorizedOptionsLayer::create(opt, data)->show();
+    }
+    void addOption(std::string name) {
+        auto btn = ccmise(ButtonSprite::create(name.c_str()),this,menu_selector(CategorizedOptionsEntry::loadOption)); 
+        btn->setAnchorPoint(ccp(0.5,0.5));
+        btn->setUserObject(ccstr(name));
+        pages[0]->addChild(btn);
+    }
+    bool setup(int u) override {
+        this->setTitle("Options");
+
+        auto l = CCLayer::create();
+        l->setAnchorPoint(ccp(0.5,0.5));
+        m_mainLayer->addChild(l);
+        pages.push_back(l);
+        for (auto&i : {"Gameplay", "Performance", "Accessibility", "Online"}) {
+            this->addOption(i);
+            this->movePos();
+        }
+
+        auto extl = CCLayer::create();
+        extl->setAnchorPoint(ccp(0.5,0.5));
+        pages.push_back(extl);
+        m_mainLayer->addChild(extl);
+        focus++;
+
+        auto msLabel = CCLabelBMFont::create("Music offset (MS)", "bigFont.fnt");
+        msLabel->setPosition(-125,-80);
+        extl->addChild(msLabel);
+
+        auto moBox = CCTextInputNode::create(100,50,"Offset","bigFont.fnt");
+        CategorizedOptionsEntry::OffsetListener* delegate;
+        moBox->setDelegate(delegate);
+        moBox->setPosition(-185.5,-110);
+        extl->addChild(moBox);
+        
+        //todo: 
+        //- option 1: add parental options layer
+        //- option 2: copy the last page in original options layer
+        //auto parental = ccmise(ccsprwfn("GJ_profileButton_001.png"),this,menu_selector())
+    }
+public:
+    static CategorizedOptionsEntry* create() {
+        auto ret = new CategorizedOptionsEntry();
+        if (ret && ret->init(284.f, 160.f, 1)) {
+            ret->autorelease();
+            return ret;
+        }
+        CC_SAFE_DELETE(ret);
+        return nullptr;
+    }
 };
